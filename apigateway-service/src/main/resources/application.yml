@@ -35,7 +35,7 @@ spring:
           predicates:
             - Path=/user-service/login
             - Method=POST
-          filter:
+          filters:
             - RemoveRequestHeader=Cookie
             - RewritePath=/user-service/(?<segment>.*), /$\{segment}
         - id: user-service
@@ -43,7 +43,15 @@ spring:
           predicates:
             - Path=/user-service/users
             - Method=POST
-          filter:
+          filters:
+            - RemoveRequestHeader=Cookie
+            - RewritePath=/user-service/(?<segment>.*), /$\{segment}
+        - id: user-service
+          uri: lb://USER-SERVICE
+          predicates:
+            - Path=/user-service/welcome
+            - Method=GET
+          filters:
             - RemoveRequestHeader=Cookie
             - RewritePath=/user-service/(?<segment>.*), /$\{segment}
         - id: user-service
@@ -51,6 +59,10 @@ spring:
           predicates:
             - Path=/user-service/**
             - Method=GET
-          filter:
+          filters:
+            - AuthorizationHeaderFilter
             - RemoveRequestHeader=Cookie
             - RewritePath=/user-service/(?<segment>.*), /$\{segment}
+
+token:
+  secret: user_token

@@ -1,63 +1,68 @@
 package com.example.userservice.security;
 
 import com.example.userservice.service.UserService;
+import lombok.RequiredArgsConstructor;
+import org.springframework.boot.autoconfigure.security.servlet.PathRequest;
+import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.env.Environment;
-import org.springframework.security.authorization.AuthorizationDecision;
-import org.springframework.security.authorization.AuthorizationManager;
-import org.springframework.security.config.Customizer;
+import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.config.annotation.ObjectPostProcessor;
 import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
-import org.springframework.security.config.annotation.web.configuration.WebSecurityConfigurerAdapter;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
-import org.springframework.security.web.access.intercept.RequestAuthorizationContext;
+import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.util.matcher.IpAddressMatcher;
-
-import javax.servlet.http.HttpServletRequest;
-
 
 @Configuration
 @EnableWebSecurity
-public class WebSecurity extends WebSecurityConfigurerAdapter {
-    private static String IP = "192.168.0.8";
-    private UserService userService;
-    private BCryptPasswordEncoder bCryptPasswordEncoder;
-    private Environment env;
+@RequiredArgsConstructor
+public class WebSecurity {
 
-    public WebSecurity(Environment env, UserService userService, BCryptPasswordEncoder bCryptPasswordEncoder) {
-        this.env = env;
-        this.userService = userService;
-        this.bCryptPasswordEncoder = bCryptPasswordEncoder;
-    }
+    private final UserService userService;
+    private final BCryptPasswordEncoder bCryptPasswordEncoder;
+    private final ObjectPostProcessor<Object> objectPostProcessor;
+    private final Environment env;
 
-    @Override
-    protected void configure(HttpSecurity http) throws Exception {
+    private static final String[] WHITE_LIST = {
+            "/users/**",
+            "/",
+            "/**"
+    };
+
+    @Bean
+    protected SecurityFilterChain config(HttpSecurity http) throws Exception {
         http.csrf().disable();
-//        http.authorizeHttpRequests().antMatchers("/users/**").permitAll();
-        http
-                .authorizeHttpRequests((authorizeRequests) -> authorizeRequests
-                        .mvcMatchers("/").access(hasIpAddress("127.0.0.1"))
-                        .anyRequest().authenticated()
-                )
-                .formLogin(Customizer.withDefaults())
-                .httpBasic(Customizer.withDefaults());
-
         http.headers().frameOptions().disable();
+        http.authorizeHttpRequests(authorize -> {
+                    try {
+                        authorize
+                                .requestMatchers(WHITE_LIST).permitAll()
+                                .requestMatchers(PathRequest.toH2Console()).permitAll()
+                                .requestMatchers(new IpAddressMatcher("127.0.0.1")).permitAll()
+                                .and()
+                                .addFilter(getAuthenticationFilter());
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                    }
+                }
+        );
+        return http.build();
     }
 
-    private static AuthorizationManager<RequestAuthorizationContext> hasIpAddress(String ipAddress) {
-        IpAddressMatcher ipAddressMatcher = new IpAddressMatcher(ipAddress);
-        return (authentication, context) -> {
-            HttpServletRequest request = context.getRequest();
-            return new AuthorizationDecision(ipAddressMatcher.matches(request));
-        };
-    }
-
-    // select pwd from users where email=?
-    // db_pwd(encrypted) == input_pwd(encrypted)
-    @Override
-    protected void configure(AuthenticationManagerBuilder auth) throws Exception {
+    public AuthenticationManager authenticationManager(AuthenticationManagerBuilder auth) throws Exception {
         auth.userDetailsService(userService).passwordEncoder(bCryptPasswordEncoder);
+        return auth.build();
     }
+
+    private AuthenticationFilter getAuthenticationFilter() throws Exception {
+        AuthenticationManagerBuilder builder = new AuthenticationManagerBuilder(objectPostProcessor);
+        AuthenticationManager authenticationManager = authenticationManager(builder);
+        AuthenticationFilter authenticationFilter =
+                new AuthenticationFilter(authenticationManager, userService, env);
+        authenticationFilter.setAuthenticationManager(authenticationManager);
+        return authenticationFilter;
+    }
+
 }
