@@ -26,8 +26,9 @@ public class WebSecurity {
     private final Environment env;
 
     private static final String[] WHITE_LIST = {
-            "/users/**",
+//            "/users/**",
             "/",
+            "/actuator/**",
             "/**"
     };
 
