@@ -29,7 +29,8 @@ public class WebSecurity {
 //            "/users/**",
             "/",
             "/actuator/**",
-            "/**"
+            "/**",
+            "/h2-console/**"
     };
 
     @Bean

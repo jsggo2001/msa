@@ -2,8 +2,8 @@ spring:
   cloud:
     config:
       uri: http://127.0.0.1:8888
-      name: config-service
-#      name: user-service
+      name: user-service
+#      name: config-service #디폴트 파일 가져올때 사용
 #  profiles:
 #    active: dev
 #  user-serice-dev.yml설정을 가져오고 싶으면 위의 yml파일 주석에 있는 내용 시용

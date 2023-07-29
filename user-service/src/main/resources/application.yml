@@ -1,7 +1,9 @@
 server:
   port: 0
-
 spring:
+  config:
+    import:
+      - classpath:/bootstrap.yml
   application:
     name: user-service
   rabbitmq:
@@ -15,15 +17,23 @@ spring:
       settings:
         web-allow-others: true
       path: /h2-console
-  datasource:
-    driver-class-name: org.h2.Driver
-    url : jdbc:h2:mem:testdb
+#  datasource:
+#    url: jdbc:h2:mem:testdb
+#    driver-class-name: org.h2.Driver
 #    username: sa
-#    password: 1234
-
+#    password:
+  jpa:
+    database-platform: org.hibernate.dialect.H2Dialect
+    open-in-view: false
+    hibernate:
+      ddl-auto: create-drop
+    properties:
+      hibernate:
+        show_sql: true
+        format_sql: true
 eureka:
   instance:
-    instance-id: ${spring.cloud.client.hostname}:${spring.application.instance_id:${random.value}}
+    instance-id: ${spring.application.name}:${spring.application.instance_id:${random.value}}
   client:
     register-with-eureka: true
     fetch-registry: true
@@ -35,8 +45,7 @@ greeting:
 
 logging:
   level:
-    com.example.userservice: DEBUG
-
+    com.example.userservice.client: DEBUG
 
 management:
   endpoints:
