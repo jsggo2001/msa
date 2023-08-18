@@ -6,6 +6,13 @@ spring:
       - classpath:/bootstrap.yml
   application:
     name: user-service
+#  zipkin:
+#    base-url: http://127.0.0.1:9411
+#    enabled: true
+#  sleuth:
+#    sampler:
+#      probability: 1.0
+
   rabbitmq:
     host: 127.0.0.1
     port: 5672
@@ -46,12 +53,23 @@ greeting:
 logging:
   level:
     com.example.userservice.client: DEBUG
+  pattern:
+    level: "%5p [%X{traceId:-},%X{spanId:-}]"
 
 management:
   endpoints:
     web:
       exposure:
-        include: refresh, health, beans, busrefresh
+        include: refresh, health, beans, busrefresh, info, metrics, prometheus
+  tracing:
+    sampling:
+      probability: 1.0
+    propagation:
+      produce: b3
+      consume: b3_multi
+    zipkin:
+      tracing:
+        endpoint: "http://localhost:9411/zipkin/"
 
 #token:
 #  expiration_time: 86400000
