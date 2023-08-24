@@ -18,9 +18,9 @@ spring:
         git:
 #          uri: file:///Users/jeongseung-gu/dev/msa_all/git-local-repo
           uri: https://github.com/jsggo2001/spring-cloud-config.git
-#          username: {username}
-#          password: {password}
-#          username? password? when private git repository using.
+          username: {username}
+          password: {password}
+#          username과 password는 public repo에서는 필요없지만 만약 privete repo라면 설정 해 주어야 된다
 
 management:
   endpoints:

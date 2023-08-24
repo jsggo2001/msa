@@ -62,7 +62,7 @@ public class OrderController {
 //        orderDto.setTotalPrice(orderDetails.getUnitPrice() * orderDetails.getQty());
 
         /* send this order to the kafka */
-//        kafkaProducer.send("example-catalog-topic", orderDto);
+        kafkaProducer.send("example-catalog-topic", orderDto);
 //        orderProducer.send("orders", orderDto);
 
 //        ResponseOrder responseOrder = mapper.map(orderDto, ResponseOrder.class);
@@ -72,7 +72,7 @@ public class OrderController {
     }
 
     @GetMapping("/{userId}/orders")
-    public ResponseEntity<List<ResponseOrder>> getOrder(@PathVariable("userId") String userId) {
+    public ResponseEntity<List<ResponseOrder>> getOrder(@PathVariable("userId") String userId) throws Exception {
         log.info("Before retrieve orders data");
         Iterable<OrderEntity> orderList = orderService.getOrdersByUserId(userId);
 
@@ -81,6 +81,14 @@ public class OrderController {
         orderList.forEach(v -> {
             result.add(new ModelMapper().map(v, ResponseOrder.class));
         });
+
+//        try {
+//            Thread.sleep(1000);
+//            throw new Exception("장애발생");
+//        } catch (InterruptedException e){
+//            log.warn(e.getMessage());
+//        }
+
         log.info("After retrieve orders data");
 
         return ResponseEntity.status(HttpStatus.OK).body(result);
